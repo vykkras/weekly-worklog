@@ -42,8 +42,14 @@ export async function pullFromSupabase() {
       console.error('[sync] pull error:', error);
       setStatus('error', error.message);
     } else {
-      console.log('[sync] no row yet (PGRST116)');
-      setStatus('ok');
+      // No row yet — push local data up to seed Supabase
+      console.log('[sync] no row yet, pushing local data');
+      const { projects, entries } = useProjectStore.getState();
+      if (projects.length > 0 || entries.length > 0) {
+        pushToSupabase();
+      } else {
+        setStatus('ok');
+      }
     }
     return;
   }
