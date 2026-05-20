@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import s from './ProjectDetail.module.css';
 import { useProjectStore, type Project, type WeekEntry } from '../../store/projectStore';
-import { getEntryStatus, daysFromWorkDate } from '../../utils/entryStatus';
+import { getEntryStatus, daysFromApproved } from '../../utils/entryStatus';
 
 const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -22,10 +22,10 @@ function dateToWeekLabel(dateStr: string): string {
 
 // ── Entry editor ──────────────────────────────────────────────────────────────
 
-function EntryEditor({ entry, onDelete }: { entry: WeekEntry; onDelete: () => void }) {
+function EntryEditor({ entry, onDelete, net }: { entry: WeekEntry; onDelete: () => void; net: 14 | 30 }) {
   const { updateEntry, deleteEntry, addWorkCode, updateWorkCode, removeWorkCode } = useProjectStore();
-  const status = getEntryStatus(entry);
-  const days = daysFromWorkDate(entry);
+  const status = getEntryStatus(entry, net);
+  const days = daysFromApproved(entry);
 
   function field<K extends keyof WeekEntry>(key: K, value: WeekEntry[K]) {
     updateEntry(entry.id, { [key]: value } as any);
@@ -42,7 +42,7 @@ function EntryEditor({ entry, onDelete }: { entry: WeekEntry; onDelete: () => vo
         />
         <div className={s.editorHeaderActions}>
           {status === 'overdue' && <span className={s.overdueTag}>Vencido · {days}d</span>}
-          {status === 'pending' && days !== null && <span className={s.pendingTag}>{days}d desde fecha</span>}
+          {status === 'pending' && days !== null && <span className={s.pendingTag}>{days}d desde aprobado</span>}
           {status === 'paid' && <span className={s.paidTag}>Pagado</span>}
           <button className={s.saveEntryBtn} onClick={() => updateEntry(entry.id, { savedAt: new Date().toISOString() })}>
             {entry.savedAt ? 'Re-guardar' : 'Guardar'}
@@ -64,6 +64,10 @@ function EntryEditor({ entry, onDelete }: { entry: WeekEntry; onDelete: () => vo
         <div className={s.field}>
           <label className={s.label}>Fecha recibido</label>
           <input type="date" className={s.input} value={entry.fechaRecibido} onChange={e => field('fechaRecibido', e.target.value)} />
+        </div>
+        <div className={s.field}>
+          <label className={s.label}>Fecha aprobado</label>
+          <input type="date" className={`${s.input} ${entry.approvedDate ? s.inputApproved : ''}`} value={entry.approvedDate} onChange={e => field('approvedDate', e.target.value)} />
         </div>
         <div className={s.field}>
           <label className={s.label}>Nº de invoices</label>
@@ -234,6 +238,16 @@ export default function ProjectDetail({ project }: { project: Project }) {
               {project.assignedTo && <span className={s.assignedBadge}>{project.assignedTo}</span>}
             </div>
           )}
+          <div className={s.netToggle}>
+            <button
+              className={`${s.netBtn} ${(project.net ?? 30) === 14 ? s.netBtnActive : ''}`}
+              onClick={() => updateProject(project.id, { net: 14 })}
+            >Net 14</button>
+            <button
+              className={`${s.netBtn} ${(project.net ?? 30) === 30 ? s.netBtnActive : ''}`}
+              onClick={() => updateProject(project.id, { net: 30 })}
+            >Net 30</button>
+          </div>
           <ContactsPanel project={project} />
         </div>
 
@@ -272,7 +286,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
                 <p className={s.emptyWeeks}>Sin semanas. Agrega una abajo.</p>
               )}
               {weekEntries.map(e => {
-                const status = getEntryStatus(e);
+                const status = getEntryStatus(e, (project.net ?? 30) as 14 | 30);
                 return (
                   <button
                     key={e.id}
@@ -314,7 +328,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
       {activeEntry ? (
         <div className={`${s.editorWrapper} ${mobileStep !== 'editor' ? s.hiddenMobile : ''}`}>
           <button className={s.backBtn} onClick={() => setMobileStep('weeks')}>← Semanas</button>
-          <EntryEditor key={activeEntry.id} entry={activeEntry} onDelete={() => setMobileStep('weeks')} />
+          <EntryEditor key={activeEntry.id} entry={activeEntry} onDelete={() => setMobileStep('weeks')} net={(project.net ?? 30) as 14 | 30} />
         </div>
       ) : (
         <div className={`${s.editorEmpty} ${mobileStep !== 'editor' ? s.hiddenMobile : ''}`}>

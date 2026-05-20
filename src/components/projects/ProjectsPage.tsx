@@ -3,12 +3,12 @@ import s from './ProjectsPage.module.css';
 import { useProjectStore } from '../../store/projectStore';
 import { PEOPLE } from '../../data/people';
 
-interface NewProjectForm { name: string; description: string; assignedTo: string; }
+interface NewProjectForm { name: string; description: string; assignedTo: string; net: 14 | 30; }
 
 export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
   const { projects, addProject, deleteProject } = useProjectStore();
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState<NewProjectForm>({ name: '', description: '', assignedTo: '' });
+  const [form, setForm] = useState<NewProjectForm>({ name: '', description: '', assignedTo: '', net: 30 });
   const [filterPerson, setFilterPerson] = useState<string | null>(null);
 
   const activePeople = PEOPLE.filter(p => projects.some(proj => proj.assignedTo === p));
@@ -18,8 +18,8 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
 
   function handleCreate() {
     if (!form.name.trim()) return;
-    const id = addProject(form.name.trim(), form.description.trim(), form.assignedTo);
-    setForm({ name: '', description: '', assignedTo: '' });
+    const id = addProject(form.name.trim(), form.description.trim(), form.assignedTo, form.net);
+    setForm({ name: '', description: '', assignedTo: '', net: 30 });
     setModal(false);
     onOpen(id);
   }
@@ -65,6 +65,7 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
               {p.description && <p className={s.cardDesc}>{p.description}</p>}
               <div className={s.cardMeta}>
                 {p.assignedTo && <span className={s.cardAssigned}>{p.assignedTo}</span>}
+                <span className={s.cardNet}>Net {p.net ?? 30}</span>
                 <span>{p.contacts.length} contacto{p.contacts.length !== 1 ? 's' : ''}</span>
               </div>
               <div className={s.cardActions} onClick={e => e.stopPropagation()}>
@@ -114,6 +115,13 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
                 <option value="">— Sin asignar —</option>
                 {PEOPLE.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
+            </div>
+            <div className={s.field}>
+              <label className={s.label}>Período de pago</label>
+              <div className={s.netToggle}>
+                <button type="button" className={`${s.netBtn} ${form.net === 14 ? s.netBtnActive : ''}`} onClick={() => setForm(f => ({ ...f, net: 14 }))}>Net 14</button>
+                <button type="button" className={`${s.netBtn} ${form.net === 30 ? s.netBtnActive : ''}`} onClick={() => setForm(f => ({ ...f, net: 30 }))}>Net 30</button>
+              </div>
             </div>
             <div className={s.modalActions}>
               <button className={s.cancelBtn} onClick={() => setModal(false)}>Cancelar</button>

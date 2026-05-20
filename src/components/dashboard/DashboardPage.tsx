@@ -1,6 +1,6 @@
 import s from './DashboardPage.module.css';
 import { useProjectStore, type Project, type WeekEntry } from '../../store/projectStore';
-import { getEntryStatus, daysFromWorkDate } from '../../utils/entryStatus';
+import { getEntryStatus, daysFromApproved } from '../../utils/entryStatus';
 import { useState } from 'react';
 import { PEOPLE } from '../../data/people';
 
@@ -10,7 +10,7 @@ function fmt$(n: number | null) {
 }
 
 // Aggregate totals for a subtree of entries
-function aggregateEntries(rootIds: string[], allEntries: WeekEntry[]) {
+function aggregateEntries(rootIds: string[], allEntries: WeekEntry[], net: 14 | 30 = 30) {
   const collect = (id: string): WeekEntry[] => {
     const e = allEntries.find(x => x.id === id);
     if (!e) return [];
@@ -21,7 +21,7 @@ function aggregateEntries(rootIds: string[], allEntries: WeekEntry[]) {
   const leaves = rootIds.flatMap(id => collect(id));
   const money = leaves.reduce((s, e) => s + (e.money ?? 0), 0);
   const invoices = leaves.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
-  const overdue = leaves.filter(e => getEntryStatus(e) === 'overdue').length;
+  const overdue = leaves.filter(e => getEntryStatus(e, net) === 'overdue').length;
   return { money, invoices, overdue, leafCount: leaves.length };
 }
 
@@ -31,11 +31,13 @@ function EntryRows({
   projectId,
   allEntries,
   depth,
+  net,
 }: {
   parentId: string | null;
   projectId: string;
   allEntries: WeekEntry[];
   depth: number;
+  net: 14 | 30;
 }) {
   const children = allEntries
     .filter(e => e.projectId === projectId && e.parentId === parentId)
@@ -44,8 +46,8 @@ function EntryRows({
   return (
     <>
       {children.map(e => {
-        const status = getEntryStatus(e);
-        const days = daysFromWorkDate(e);
+        const status = getEntryStatus(e, net);
+        const days = daysFromApproved(e);
         return (
           <div key={e.id}>
             <div className={s.entryRow} style={{ paddingLeft: 20 + depth * 16 }}>
@@ -64,7 +66,7 @@ function EntryRows({
                 {status === 'pending' && <span className={s.badgePending}>Pendiente</span>}
               </span>
             </div>
-            <EntryRows parentId={e.id} projectId={projectId} allEntries={allEntries} depth={depth + 1} />
+            <EntryRows parentId={e.id} projectId={projectId} allEntries={allEntries} depth={depth + 1} net={net} />
           </div>
         );
       })}
@@ -84,7 +86,7 @@ function ProjectAccordion({
   const [open, setOpen] = useState(false);
   const projectEntries = allEntries.filter(e => e.projectId === project.id);
   const rootIds = projectEntries.filter(e => e.parentId === null).map(e => e.id);
-  const { money, invoices, overdue } = aggregateEntries(rootIds, allEntries);
+  const { money, invoices, overdue } = aggregateEntries(rootIds, allEntries, (project.net ?? 30) as 14 | 30);
 
   return (
     <div className={`${s.accordion} ${open ? s.accordionOpen : ''}`}>
@@ -119,7 +121,7 @@ function ProjectAccordion({
                 <span className={s.entryCell}>Inv.</span>
                 <span className={s.entryStatus}>Estado</span>
               </div>
-              <EntryRows parentId={null} projectId={project.id} allEntries={allEntries} depth={0} />
+              <EntryRows parentId={null} projectId={project.id} allEntries={allEntries} depth={0} net={(project.net ?? 30) as 14 | 30} />
             </div>
           )}
         </div>
@@ -142,7 +144,11 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
   const childIds = new Set(entries.map(e => e.parentId).filter(Boolean));
   const leafEntries = filteredEntries.filter(e => !childIds.has(e.id));
 
-  const overdueCount  = leafEntries.filter(e => getEntryStatus(e) === 'overdue').length;
+  const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
+  const overdueCount = leafEntries.filter(e => {
+    const net = (projectMap[e.projectId]?.net ?? 30) as 14 | 30;
+    return getEntryStatus(e, net) === 'overdue';
+  }).length;
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
 
