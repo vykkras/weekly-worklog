@@ -72,7 +72,6 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
   const leafEntries = filteredEntries.filter(e => !childIds.has(e.id));
 
   const overdueEntries  = leafEntries.filter(e => getEntryStatus(e) === 'overdue');
-  const regularEntries  = filteredEntries.filter(e => !overdueEntries.includes(e));
 
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
