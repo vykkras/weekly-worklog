@@ -64,6 +64,50 @@
   color: #94a3b8;
 }
 
+/* ── Sync indicator ── */
+
+.syncBar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.syncSpinner {
+  font-size: 14px;
+  color: #64748b;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.syncOk {
+  font-size: 10.5px;
+  color: #475569;
+}
+
+.syncError {
+  font-size: 10.5px;
+  color: #f87171;
+  font-weight: 600;
+}
+
+.syncBtn {
+  background: none;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 14px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.syncBtn:hover { border-color: #475569; color: #94a3b8; }
+
 /* ── Body ── */
 
 .body {

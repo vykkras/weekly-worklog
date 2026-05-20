@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import s from './App.module.css';
 import { useProjectStore } from './store/projectStore';
+import { useSyncStore, pullFromSupabase } from './lib/sync';
 import DashboardPage from './components/dashboard/DashboardPage';
 import ProjectsPage from './components/projects/ProjectsPage';
 import ProjectDetail from './components/projects/ProjectDetail';
@@ -10,6 +11,7 @@ type View = { page: 'dashboard' } | { page: 'projects' } | { page: 'project'; pr
 export default function App() {
   const [view, setView] = useState<View>({ page: 'dashboard' });
   const { projects } = useProjectStore();
+  const { status, error, lastSync } = useSyncStore();
 
   const activeProject = view.page === 'project'
     ? projects.find(p => p.id === view.projectId) ?? null
@@ -42,6 +44,17 @@ export default function App() {
             <span className={s.headerCrumbPage}>{activeProject.name}</span>
           </div>
         )}
+
+        <div className={s.syncBar}>
+          {status === 'error' && (
+            <span className={s.syncError} title={error ?? ''}>Error sync</span>
+          )}
+          {status === 'syncing' && <span className={s.syncSpinner}>↻</span>}
+          {status === 'ok' && lastSync && (
+            <span className={s.syncOk}>{lastSync}</span>
+          )}
+          <button className={s.syncBtn} onClick={pullFromSupabase} title="Sincronizar ahora">↻</button>
+        </div>
       </header>
 
       <div className={s.body}>
