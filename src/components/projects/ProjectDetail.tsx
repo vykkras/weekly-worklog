@@ -3,6 +3,31 @@ import s from './ProjectDetail.module.css';
 import { useProjectStore, type Project, type WeekEntry } from '../../store/projectStore';
 import { getEntryStatus, daysFromWorkDate } from '../../utils/entryStatus';
 
+// ── Month helpers ─────────────────────────────────────────────────────────────
+
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function generateMonthOptions() {
+  const now = new Date();
+  const opts: { label: string; sortKey: number }[] = [];
+  for (let i = -6; i <= 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    opts.push({
+      label: `${MONTHS_ES[d.getMonth()]} ${d.getFullYear()}`,
+      sortKey: d.getFullYear() * 12 + d.getMonth(),
+    });
+  }
+  return opts;
+}
+
+function monthSortKey(label: string): number {
+  const parts = label.split(' ');
+  const idx = MONTHS_ES.indexOf(parts[0]);
+  const year = parseInt(parts[1]);
+  if (idx === -1 || isNaN(year)) return 0;
+  return year * 12 + idx;
+}
+
 // ── Tree helpers ──────────────────────────────────────────────────────────────
 
 function TreeNode({
@@ -260,8 +285,11 @@ export default function ProjectDetail({ project }: { project: Project }) {
     setMobilePanel('editor');
   }
 
+  const monthOptions = generateMonthOptions();
   const projectEntries = entries.filter(e => e.projectId === project.id);
-  const rootEntries = projectEntries.filter(e => e.parentId === null).sort((a, b) => a.sortOrder - b.sortOrder);
+  const rootEntries = projectEntries
+    .filter(e => e.parentId === null)
+    .sort((a, b) => monthSortKey(a.label) - monthSortKey(b.label));
   const activeEntry = activeId ? projectEntries.find(e => e.id === activeId) ?? null : null;
 
   useEffect(() => {
@@ -288,13 +316,27 @@ export default function ProjectDetail({ project }: { project: Project }) {
     deleteEntry(id);
   }
 
-  function startAdd(parentId: string | null) {
+  function startAdd(parentId: string) {
     setNewLabel('');
-    setAddingUnder(parentId ?? 'root');
+    setAddingUnder(parentId);
   }
 
   const showAddInput = addingUnder !== 'root-sentinel';
-  const addUnderParent = addingUnder === 'root' ? null : addingUnder as string | null;
+  const addUnderParent = addingUnder as string | null;
+
+  function handleMonthSelect(e: React.ChangeEvent<HTMLSelectElement>) {
+    const label = e.target.value;
+    e.target.value = '';
+    if (!label) return;
+    const existing = rootEntries.find(r => r.label === label);
+    if (existing) {
+      selectEntry(existing.id);
+    } else {
+      const id = addEntry(project.id, null, label);
+      setActiveId(id);
+      setMobilePanel('editor');
+    }
+  }
 
   return (
     <div className={s.page}>
@@ -327,7 +369,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
               depth={0}
               activeId={activeId}
               onSelect={selectEntry}
-              onAddChild={id => startAdd(id)}
+              onAddChild={startAdd}
               onDelete={handleDeleteEntry}
             />
           ))}
@@ -339,7 +381,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
                 className={s.inlineAddInput}
                 value={newLabel}
                 onChange={e => setNewLabel(e.target.value)}
-                placeholder="Nombre de carpeta"
+                placeholder="Nombre de sub-carpeta"
                 onKeyDown={e => {
                   if (e.key === 'Enter') confirmAdd(addUnderParent);
                   if (e.key === 'Escape') setAddingUnder('root-sentinel');
@@ -350,7 +392,14 @@ export default function ProjectDetail({ project }: { project: Project }) {
             </div>
           )}
 
-          <button className={s.addRootBtn} onClick={() => startAdd(null)}>+ Nueva carpeta</button>
+          <select className={s.monthSelect} onChange={handleMonthSelect} defaultValue="">
+            <option value="" disabled>+ Agregar mes</option>
+            {monthOptions.map(o => (
+              <option key={o.label} value={o.label}>
+                {o.label}{rootEntries.some(r => r.label === o.label) ? ' ✓' : ''}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

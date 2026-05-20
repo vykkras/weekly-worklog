@@ -138,6 +138,23 @@
 }
 .addRootBtn:hover { border-color: #3b82f6; color: #3b82f6; }
 
+.monthSelect {
+  margin: 4px 12px 12px;
+  width: calc(100% - 24px);
+  padding: 8px 10px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  transition: border-color 0.12s, color 0.12s;
+}
+.monthSelect:hover { border-color: #3b82f6; color: #93c5fd; }
+
 /* ── Tree nodes ── */
 
 .treeNode { }
