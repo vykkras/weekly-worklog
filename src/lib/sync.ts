@@ -8,7 +8,7 @@ interface SyncState {
   status: 'idle' | 'syncing' | 'ok' | 'error';
   error: string | null;
   lastSync: string | null;
-  setStatus: (s: SyncState['status'], error?: string) => void;
+  setStatus: (s: SyncState['status'], error?: string | null) => void;
   setLastSync: () => void;
 }
 
