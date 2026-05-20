@@ -35,22 +35,29 @@ export async function pullFromSupabase() {
     .eq('id', ROW_ID)
     .single();
 
+  console.log('[sync] pull result:', { data, error });
+
   if (error) {
-    // PGRST116 = row not found — normal on first use
     if (error.code !== 'PGRST116') {
       console.error('[sync] pull error:', error);
       setStatus('error', error.message);
     } else {
+      console.log('[sync] no row yet (PGRST116)');
       setStatus('ok');
     }
     return;
   }
 
+  console.log('[sync] raw data from Supabase:', data.data);
+
   const { projects, entries } = data.data as { projects: any[]; entries: any[] };
+  console.log('[sync] projects count:', projects?.length, 'entries count:', entries?.length);
+
   if (Array.isArray(projects) && Array.isArray(entries)) {
     isPulling = true;
     useProjectStore.getState().loadAll(projects, entries);
     isPulling = false;
+    console.log('[sync] loadAll done, store now has:', useProjectStore.getState().projects.length, 'projects');
     setLastSync();
   }
 }
@@ -60,6 +67,8 @@ export async function pushToSupabase() {
   setStatus('syncing');
 
   const { projects, entries } = useProjectStore.getState();
+  console.log('[sync] pushing to Supabase:', projects.length, 'projects,', entries.length, 'entries');
+
   const { error } = await supabase
     .from('weekly_worklog_state')
     .upsert({ id: ROW_ID, data: { projects, entries }, updated_at: new Date().toISOString() });
@@ -68,6 +77,7 @@ export async function pushToSupabase() {
     console.error('[sync] push error:', error);
     setStatus('error', error.message);
   } else {
+    console.log('[sync] push ok');
     setLastSync();
   }
 }
