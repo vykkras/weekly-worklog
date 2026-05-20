@@ -88,7 +88,7 @@ function ProjectAccordion({
 
   return (
     <div className={`${s.accordion} ${open ? s.accordionOpen : ''}`}>
-      <button className={s.accordionHeader} onClick={() => setOpen(o => !o)}>
+      <div className={s.accordionHeader} onClick={() => setOpen(o => !o)}>
         <span className={s.accordionToggle}>{open ? '▾' : '▸'}</span>
         <span className={s.accordionName}>{project.name}</span>
         {project.assignedTo && <span className={s.accordionPerson}>{project.assignedTo}</span>}
@@ -103,7 +103,7 @@ function ProjectAccordion({
         >
           Abrir
         </button>
-      </button>
+      </div>
 
       {open && (
         <div className={s.accordionBody}>
