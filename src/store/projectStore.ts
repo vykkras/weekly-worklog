@@ -56,6 +56,9 @@ interface ProjectStore {
   updateEntry: (id: string, updates: Partial<Omit<WeekEntry, 'id' | 'projectId' | 'createdAt'>>) => void;
   deleteEntry: (id: string) => void;
 
+  // Supabase sync
+  loadAll: (projects: Project[], entries: WeekEntry[]) => void;
+
   // Work codes within an entry
   addWorkCode: (entryId: string) => void;
   updateWorkCode: (entryId: string, codeId: string, updates: Partial<Omit<WorkCode, 'id'>>) => void;
@@ -192,6 +195,10 @@ export const useProjectStore = create<ProjectStore>()(
             return { ...e, workCodes, money: workCodes.reduce((sum, w) => sum + w.quantity, 0) };
           }),
         }));
+      },
+
+      loadAll(projects, entries) {
+        set(() => ({ projects, entries }));
       },
     }),
     { name: 'dc-weekly-v6' }
