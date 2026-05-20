@@ -29,7 +29,7 @@ function EntriesTable({
   rowClass?: string;
 }) {
   return (
-    <div className={s.table}>
+    <div className={s.tableWrap}><div className={s.table}>
       <div className={s.tableHead}>
         <span>Proyecto</span>
         <span>Carpeta</span>
@@ -56,7 +56,7 @@ function EntriesTable({
           </div>
         );
       })}
-    </div>
+    </div></div>
   );
 }
 

@@ -156,3 +156,21 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
+
+/* ── Mobile ── */
+
+@media (max-width: 700px) {
+  .page { padding: 20px 16px; gap: 24px; }
+
+  .heroTitle { font-size: 20px; }
+
+  .filterChips { gap: 4px; }
+  .chip { padding: 5px 10px; font-size: 11px; }
+
+  .statsGrid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .statCard  { padding: 14px; }
+  .statValue { font-size: 22px; }
+
+  .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 520px; }
+}

@@ -248,11 +248,17 @@ function ContactsPanel({ project }: { project: Project }) {
 export default function ProjectDetail({ project }: { project: Project }) {
   const { entries, addEntry, deleteEntry, updateProject } = useProjectStore();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [mobilePanel, setMobilePanel] = useState<'tree' | 'editor'>('tree');
   const [addingUnder, setAddingUnder] = useState<string | null | 'root'>('root-sentinel');
   const [newLabel, setNewLabel] = useState('');
   const addInputRef = useRef<HTMLInputElement>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(project.name);
+
+  function selectEntry(id: string) {
+    setActiveId(id);
+    setMobilePanel('editor');
+  }
 
   const projectEntries = entries.filter(e => e.projectId === project.id);
   const rootEntries = projectEntries.filter(e => e.parentId === null).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -273,6 +279,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
     setNewLabel('');
     setAddingUnder('root-sentinel');
     setActiveId(id);
+    setMobilePanel('editor');
   }
 
   function handleDeleteEntry(id: string) {
@@ -292,7 +299,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
   return (
     <div className={s.page}>
       {/* ── Tree panel ── */}
-      <div className={s.treePanel}>
+      <div className={`${s.treePanel} ${mobilePanel === 'editor' ? s.treePanelHidden : ''}`}>
         <div className={s.treePanelHeader}>
           {editingName ? (
             <input
@@ -319,7 +326,7 @@ export default function ProjectDetail({ project }: { project: Project }) {
               allEntries={projectEntries}
               depth={0}
               activeId={activeId}
-              onSelect={setActiveId}
+              onSelect={selectEntry}
               onAddChild={id => startAdd(id)}
               onDelete={handleDeleteEntry}
             />
@@ -349,9 +356,12 @@ export default function ProjectDetail({ project }: { project: Project }) {
 
       {/* ── Editor panel ── */}
       {activeEntry ? (
-        <EntryEditor key={activeEntry.id} entry={activeEntry} />
+        <div className={`${s.editorWrapper} ${mobilePanel === 'tree' ? s.editorHidden : ''}`}>
+          <button className={s.backBtn} onClick={() => setMobilePanel('tree')}>← Carpetas</button>
+          <EntryEditor key={activeEntry.id} entry={activeEntry} />
+        </div>
       ) : (
-        <div className={s.editorEmpty}>
+        <div className={`${s.editorEmpty} ${mobilePanel === 'tree' ? s.editorHidden : ''}`}>
           Selecciona o crea una carpeta para editar su contenido.
         </div>
       )}

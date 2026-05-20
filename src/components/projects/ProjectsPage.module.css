@@ -113,6 +113,15 @@
   padding: 64px 20px;
 }
 
+/* ── Mobile ── */
+
+@media (max-width: 700px) {
+  .page { padding: 20px 16px; gap: 20px; }
+  .grid { grid-template-columns: 1fr; }
+  .modal { width: calc(100vw - 32px); padding: 20px; }
+  .pageTitle { font-size: 18px; }
+}
+
 /* ── Modal ── */
 
 .modalOverlay {

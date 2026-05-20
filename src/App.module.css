@@ -9,12 +9,31 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 0 28px;
-  height: 56px;
+  gap: 12px;
+  padding: 0 20px;
+  height: 52px;
   background: #0f172a;
   flex-shrink: 0;
   border-bottom: 1px solid #1e293b;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+.hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #94a3b8;
+  border-radius: 2px;
 }
 
 .headerBrand {
@@ -48,20 +67,18 @@
   align-items: center;
   gap: 6px;
   margin-left: 4px;
+  min-width: 0;
 }
 
-.headerCrumbPhase {
-  font-size: 11px;
-  font-weight: 600;
-  color: #475569;
-}
-
-.headerCrumbSep { color: #334155; font-size: 12px; }
+.headerCrumbSep { color: #334155; font-size: 12px; flex-shrink: 0; }
 
 .headerCrumbPage {
   font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Sync indicator ── */
@@ -71,6 +88,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .syncSpinner {
@@ -114,6 +132,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
 /* ── Sidebar ── */
@@ -144,7 +163,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 10px;
   border-radius: 8px;
   border: none;
   background: none;
@@ -164,10 +183,47 @@
 
 .sidebarLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.sidebarOverlay { display: none; }
+
 /* ── Content ── */
 
 .content {
   flex: 1;
   overflow-y: auto;
   min-width: 0;
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 700px) {
+  .header { padding: 0 14px; gap: 8px; }
+
+  .hamburger { display: flex; }
+
+  .syncOk { display: none; }
+
+  .sidebar {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    width: 240px;
+  }
+
+  .sidebarVisible {
+    transform: translateX(0);
+  }
+
+  .sidebarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0,0,0,0.4);
+  }
+
+  .sidebarItem { padding: 12px 10px; font-size: 14px; }
 }

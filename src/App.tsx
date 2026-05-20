@@ -10,8 +10,14 @@ type View = { page: 'dashboard' } | { page: 'projects' } | { page: 'project'; pr
 
 export default function App() {
   const [view, setView] = useState<View>({ page: 'dashboard' });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { projects } = useProjectStore();
   const { status, error, lastSync } = useSyncStore();
+
+  function navigate(v: View) {
+    setView(v);
+    setSidebarOpen(false);
+  }
 
   const activeProject = view.page === 'project'
     ? projects.find(p => p.id === view.projectId) ?? null
@@ -31,7 +37,10 @@ export default function App() {
     <div className={s.shell}>
 
       <header className={s.header}>
-        <button className={s.headerBrand} onClick={() => setView({ page: 'dashboard' })}>
+        <button className={s.hamburger} onClick={() => setSidebarOpen(o => !o)} aria-label="Menú">
+          <span /><span /><span />
+        </button>
+        <button className={s.headerBrand} onClick={() => navigate({ page: 'dashboard' })}>
           <div>
             <p className={s.headerName}>DC CABLE</p>
             <p className={s.headerSub}>Weekly Worklog</p>
@@ -58,17 +67,18 @@ export default function App() {
       </header>
 
       <div className={s.body}>
-        <nav className={s.sidebar}>
+        {sidebarOpen && <div className={s.sidebarOverlay} onClick={() => setSidebarOpen(false)} />}
+        <nav className={`${s.sidebar} ${sidebarOpen ? s.sidebarVisible : ''}`}>
           <div className={s.sidebarSection}>
             <button
               className={`${s.sidebarItem} ${view.page === 'dashboard' ? s.sidebarItemActive : ''}`}
-              onClick={() => setView({ page: 'dashboard' })}
+              onClick={() => navigate({ page: 'dashboard' })}
             >
               <span className={s.sidebarLabel}>Dashboard</span>
             </button>
             <button
               className={`${s.sidebarItem} ${view.page === 'projects' ? s.sidebarItemActive : ''}`}
-              onClick={() => setView({ page: 'projects' })}
+              onClick={() => navigate({ page: 'projects' })}
             >
               <span className={s.sidebarLabel}>Proyectos</span>
             </button>
@@ -82,7 +92,7 @@ export default function App() {
                   <button
                     key={p.id}
                     className={`${s.sidebarItem} ${view.page === 'project' && view.projectId === p.id ? s.sidebarItemActive : ''}`}
-                    onClick={() => setView({ page: 'project', projectId: p.id })}
+                    onClick={() => navigate({ page: 'project', projectId: p.id })}
                   >
                     <span className={s.sidebarLabel}>{p.name}</span>
                   </button>
