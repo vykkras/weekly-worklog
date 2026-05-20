@@ -2,6 +2,7 @@ import s from './DashboardPage.module.css';
 import { useProjectStore, type WeekEntry } from '../../store/projectStore';
 import { getEntryStatus, daysFromWorkDate } from '../../utils/entryStatus';
 import { useState } from 'react';
+import { PEOPLE } from '../../data/people';
 
 function fmt$(n: number | null) {
   if (n === null) return '—';
@@ -24,7 +25,7 @@ function EntriesTable({
 }: {
   entries: WeekEntry[];
   allEntries: WeekEntry[];
-  projectMap: Record<string, { name: string }>;
+  projectMap: Record<string, { name: string; assignedTo: string }>;
   onOpenProject: (id: string) => void;
   rowClass?: string;
 }) {
@@ -62,21 +63,25 @@ function EntriesTable({
 
 export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: string) => void }) {
   const { projects, entries } = useProjectStore();
-  const [filterProjectId, setFilterProjectId] = useState<string | null>(null);
+  const [filterPerson, setFilterPerson] = useState<string | null>(null);
 
-  const filteredEntries = filterProjectId
-    ? entries.filter(e => e.projectId === filterProjectId)
+  const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
+
+  const filteredEntries = filterPerson
+    ? entries.filter(e => projectMap[e.projectId]?.assignedTo === filterPerson)
     : entries;
 
   const childIds = new Set(entries.map(e => e.parentId).filter(Boolean));
   const leafEntries = filteredEntries.filter(e => !childIds.has(e.id));
 
-  const overdueEntries  = leafEntries.filter(e => getEntryStatus(e) === 'overdue');
-
+  const overdueEntries = leafEntries.filter(e => getEntryStatus(e) === 'overdue');
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
 
-  const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
+  const personCounts = PEOPLE.map(person => ({
+    name: person,
+    count: projects.filter(p => p.assignedTo === person).length,
+  })).filter(pc => pc.count > 0);
 
   return (
     <div className={s.page}>
@@ -85,27 +90,43 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
         <p className={s.heroSub}>Resumen de trabajos semanales · {projects.length} proyectos</p>
       </div>
 
-      {/* ── Filter ── */}
-      {projects.length > 0 && (
+      {/* ── Person filter ── */}
+      {personCounts.length > 0 && (
         <div className={s.filterBar}>
-          <span className={s.filterLabel}>Proyecto</span>
+          <span className={s.filterLabel}>Responsable</span>
           <div className={s.filterChips}>
             <button
-              className={`${s.chip} ${filterProjectId === null ? s.chipActive : ''}`}
-              onClick={() => setFilterProjectId(null)}
+              className={`${s.chip} ${filterPerson === null ? s.chipActive : ''}`}
+              onClick={() => setFilterPerson(null)}
             >
               Todos
             </button>
-            {projects.map(p => (
+            {PEOPLE.filter(p => projects.some(proj => proj.assignedTo === p)).map(person => (
               <button
-                key={p.id}
-                className={`${s.chip} ${filterProjectId === p.id ? s.chipActive : ''}`}
-                onClick={() => setFilterProjectId(filterProjectId === p.id ? null : p.id)}
+                key={person}
+                className={`${s.chip} ${filterPerson === person ? s.chipActive : ''}`}
+                onClick={() => setFilterPerson(filterPerson === person ? null : person)}
               >
-                {p.name}
+                {person}
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Per-person project counts ── */}
+      {personCounts.length > 0 && (
+        <div className={s.personGrid}>
+          {personCounts.map(pc => (
+            <button
+              key={pc.name}
+              className={`${s.personCard} ${filterPerson === pc.name ? s.personCardActive : ''}`}
+              onClick={() => setFilterPerson(filterPerson === pc.name ? null : pc.name)}
+            >
+              <p className={s.personName}>{pc.name}</p>
+              <p className={s.personCount}>{pc.count} proyecto{pc.count !== 1 ? 's' : ''}</p>
+            </button>
+          ))}
         </div>
       )}
 

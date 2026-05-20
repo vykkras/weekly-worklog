@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import s from './ProjectsPage.module.css';
 import { useProjectStore } from '../../store/projectStore';
+import { PEOPLE } from '../../data/people';
 
-interface NewProjectForm { name: string; description: string; }
+interface NewProjectForm { name: string; description: string; assignedTo: string; }
 
 export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
   const { projects, addProject, deleteProject } = useProjectStore();
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState<NewProjectForm>({ name: '', description: '' });
+  const [form, setForm] = useState<NewProjectForm>({ name: '', description: '', assignedTo: '' });
 
   function handleCreate() {
     if (!form.name.trim()) return;
-    const id = addProject(form.name.trim(), form.description.trim());
-    setForm({ name: '', description: '' });
+    const id = addProject(form.name.trim(), form.description.trim(), form.assignedTo);
+    setForm({ name: '', description: '', assignedTo: '' });
     setModal(false);
     onOpen(id);
   }
@@ -33,6 +34,7 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
               <p className={s.cardName}>{p.name}</p>
               {p.description && <p className={s.cardDesc}>{p.description}</p>}
               <div className={s.cardMeta}>
+                {p.assignedTo && <span className={s.cardAssigned}>{p.assignedTo}</span>}
                 <span>{p.contacts.length} contacto{p.contacts.length !== 1 ? 's' : ''}</span>
               </div>
               <div className={s.cardActions} onClick={e => e.stopPropagation()}>
@@ -71,6 +73,17 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               />
+            </div>
+            <div className={s.field}>
+              <label className={s.label}>Asignado a</label>
+              <select
+                className={s.input}
+                value={form.assignedTo}
+                onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))}
+              >
+                <option value="">— Sin asignar —</option>
+                {PEOPLE.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
             </div>
             <div className={s.modalActions}>
               <button className={s.cancelBtn} onClick={() => setModal(false)}>Cancelar</button>

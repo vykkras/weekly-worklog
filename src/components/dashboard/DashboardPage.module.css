@@ -59,6 +59,39 @@
 .chip:hover { border-color: #93c5fd; color: #1d4ed8; }
 .chipActive { background: #1e3a5f !important; color: #fff !important; border-color: #1e3a5f !important; }
 
+/* ── Per-person cards ── */
+
+.personGrid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.personCard {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s;
+}
+.personCard:hover { border-color: #93c5fd; }
+.personCardActive { border-color: #1e3a5f !important; background: #eff6ff !important; }
+
+.personName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.personCardActive .personName { color: #1e3a5f; }
+
+.personCount {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
 /* ── Stat cards ── */
 
 .statsGrid {

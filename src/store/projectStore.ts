@@ -29,12 +29,14 @@ export interface WeekEntry {
   fechaRecibido: string;
   savedAt: string | null;
   createdAt: string;
+  // submittedBy removed — now stored on Project as assignedTo
 }
 
 export interface Project {
   id: string;
   name: string;
   description: string;
+  assignedTo: string;
   contacts: Contact[];
   createdAt: string;
 }
@@ -44,8 +46,8 @@ interface ProjectStore {
   entries: WeekEntry[];
 
   // Projects
-  addProject: (name: string, description: string) => string;
-  updateProject: (id: string, updates: Partial<Pick<Project, 'name' | 'description'>>) => void;
+  addProject: (name: string, description: string, assignedTo: string) => string;
+  updateProject: (id: string, updates: Partial<Pick<Project, 'name' | 'description' | 'assignedTo'>>) => void;
   deleteProject: (id: string) => void;
   addContact: (projectId: string) => void;
   updateContact: (projectId: string, contactId: string, updates: Partial<Omit<Contact, 'id'>>) => void;
@@ -71,10 +73,10 @@ export const useProjectStore = create<ProjectStore>()(
       projects: [],
       entries: [],
 
-      addProject(name, description) {
+      addProject(name, description, assignedTo) {
         const id = crypto.randomUUID();
         set(s => ({
-          projects: [...s.projects, { id, name, description, contacts: [], createdAt: new Date().toISOString() }],
+          projects: [...s.projects, { id, name, description, assignedTo, contacts: [], createdAt: new Date().toISOString() }],
         }));
         return id;
       },
@@ -134,7 +136,7 @@ export const useProjectStore = create<ProjectStore>()(
             workCodes: [],
             invoiceCount: null,
             money: null,
-            submittedBy: '',
+            submittedBy: '', // kept for schema compat; not shown in UI
             notes: '',
             workDate: '',
             fechaRecibido: '',
@@ -201,6 +203,6 @@ export const useProjectStore = create<ProjectStore>()(
         set(() => ({ projects, entries }));
       },
     }),
-    { name: 'dc-weekly-v6' }
+    { name: 'dc-weekly-v7' }
   )
 );

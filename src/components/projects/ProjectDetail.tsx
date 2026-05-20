@@ -167,15 +167,6 @@ function EntryEditor({ entry }: { entry: WeekEntry }) {
             min={0}
           />
         </div>
-        <div className={s.field}>
-          <label className={s.label}>Submitido por</label>
-          <input
-            className={s.input}
-            value={entry.submittedBy}
-            onChange={e => field('submittedBy', e.target.value)}
-            placeholder="Nombre"
-          />
-        </div>
       </div>
 
       <div className={s.field}>
@@ -353,9 +344,12 @@ export default function ProjectDetail({ project }: { project: Project }) {
               autoFocus
             />
           ) : (
-            <p className={s.projectName} onDoubleClick={() => { setNameVal(project.name); setEditingName(true); }}>
-              {project.name}
-            </p>
+            <div className={s.projectNameRow}>
+              <p className={s.projectName} onDoubleClick={() => { setNameVal(project.name); setEditingName(true); }}>
+                {project.name}
+              </p>
+              {project.assignedTo && <span className={s.assignedBadge}>{project.assignedTo}</span>}
+            </div>
           )}
           <ContactsPanel project={project} />
         </div>
