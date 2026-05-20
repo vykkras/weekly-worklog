@@ -1,63 +1,130 @@
 import s from './DashboardPage.module.css';
-import { useProjectStore, type WeekEntry } from '../../store/projectStore';
+import { useProjectStore, type Project, type WeekEntry } from '../../store/projectStore';
 import { getEntryStatus, daysFromWorkDate } from '../../utils/entryStatus';
 import { useState } from 'react';
 import { PEOPLE } from '../../data/people';
 
 function fmt$(n: number | null) {
-  if (n === null) return '—';
+  if (n === null || n === 0) return '—';
   return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function pathLabel(entry: WeekEntry, all: WeekEntry[]): string {
-  if (!entry.parentId) return entry.label;
-  const parent = all.find(e => e.id === entry.parentId);
-  if (!parent) return entry.label;
-  return `${pathLabel(parent, all)} / ${entry.label}`;
+// Aggregate totals for a subtree of entries
+function aggregateEntries(rootIds: string[], allEntries: WeekEntry[]) {
+  const collect = (id: string): WeekEntry[] => {
+    const e = allEntries.find(x => x.id === id);
+    if (!e) return [];
+    const children = allEntries.filter(x => x.parentId === id);
+    if (children.length === 0) return [e];
+    return children.flatMap(c => collect(c.id));
+  };
+  const leaves = rootIds.flatMap(id => collect(id));
+  const money = leaves.reduce((s, e) => s + (e.money ?? 0), 0);
+  const invoices = leaves.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
+  const overdue = leaves.filter(e => getEntryStatus(e) === 'overdue').length;
+  return { money, invoices, overdue, leafCount: leaves.length };
 }
 
-function EntriesTable({
-  entries,
+// Render entries in tree order with depth indentation
+function EntryRows({
+  parentId,
+  projectId,
   allEntries,
-  projectMap,
-  onOpenProject,
-  rowClass,
+  depth,
 }: {
-  entries: WeekEntry[];
+  parentId: string | null;
+  projectId: string;
   allEntries: WeekEntry[];
-  projectMap: Record<string, { name: string; assignedTo: string }>;
-  onOpenProject: (id: string) => void;
-  rowClass?: string;
+  depth: number;
 }) {
+  const children = allEntries
+    .filter(e => e.projectId === projectId && e.parentId === parentId)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
-    <div className={s.tableWrap}><div className={s.table}>
-      <div className={s.tableHead}>
-        <span>Proyecto</span>
-        <span>Carpeta</span>
-        <span>Fecha</span>
-        <span>Días</span>
-        <span>Dinero</span>
-        <span>Invoices</span>
-      </div>
-      {entries.map(entry => {
-        const proj = projectMap[entry.projectId];
-        const days = daysFromWorkDate(entry);
+    <>
+      {children.map(e => {
+        const status = getEntryStatus(e);
+        const days = daysFromWorkDate(e);
         return (
-          <div
-            key={entry.id}
-            className={`${s.tableRow} ${rowClass ?? ''}`}
-            onClick={() => onOpenProject(entry.projectId)}
-          >
-            <span className={s.cellProject}>{proj?.name ?? '—'}</span>
-            <span className={s.cellFolder}>{pathLabel(entry, allEntries)}</span>
-            <span className={s.cell}>{entry.workDate || '—'}</span>
-            <span className={s.cell}>{days !== null ? `${days}d` : '—'}</span>
-            <span className={s.cell}>{fmt$(entry.money)}</span>
-            <span className={s.cell}>{entry.invoiceCount ?? '—'}</span>
+          <div key={e.id}>
+            <div className={s.entryRow} style={{ paddingLeft: 20 + depth * 16 }}>
+              <span className={`${s.entryLabel} ${status === 'paid' ? s.labelPaid : status === 'overdue' ? s.labelOverdue : ''}`}>
+                {e.label || 'Sin título'}
+              </span>
+              <span className={s.entryCell}>{e.workDate || '—'}</span>
+              <span className={s.entryCell}>
+                {days !== null ? `${days}d` : '—'}
+              </span>
+              <span className={s.entryCell}>{fmt$(e.money)}</span>
+              <span className={s.entryCell}>{e.invoiceCount ?? '—'}</span>
+              <span className={s.entryStatus}>
+                {status === 'paid' && <span className={s.badgePaid}>Pagado</span>}
+                {status === 'overdue' && <span className={s.badgeOverdue}>Vencido</span>}
+                {status === 'pending' && <span className={s.badgePending}>Pendiente</span>}
+              </span>
+            </div>
+            <EntryRows parentId={e.id} projectId={projectId} allEntries={allEntries} depth={depth + 1} />
           </div>
         );
       })}
-    </div></div>
+    </>
+  );
+}
+
+function ProjectAccordion({
+  project,
+  allEntries,
+  onOpen,
+}: {
+  project: Project;
+  allEntries: WeekEntry[];
+  onOpen: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const projectEntries = allEntries.filter(e => e.projectId === project.id);
+  const rootIds = projectEntries.filter(e => e.parentId === null).map(e => e.id);
+  const { money, invoices, overdue } = aggregateEntries(rootIds, allEntries);
+
+  return (
+    <div className={`${s.accordion} ${open ? s.accordionOpen : ''}`}>
+      <button className={s.accordionHeader} onClick={() => setOpen(o => !o)}>
+        <span className={s.accordionToggle}>{open ? '▾' : '▸'}</span>
+        <span className={s.accordionName}>{project.name}</span>
+        {project.assignedTo && <span className={s.accordionPerson}>{project.assignedTo}</span>}
+        <span className={s.accordionMeta}>
+          {overdue > 0 && <span className={s.overdueCount}>{overdue} vencido{overdue !== 1 ? 's' : ''}</span>}
+          <span>{fmt$(money)}</span>
+          {invoices > 0 && <span>{invoices} inv.</span>}
+        </span>
+        <button
+          className={s.accordionOpenBtn}
+          onClick={e => { e.stopPropagation(); onOpen(project.id); }}
+        >
+          Abrir
+        </button>
+      </button>
+
+      {open && (
+        <div className={s.accordionBody}>
+          {projectEntries.length === 0 ? (
+            <p className={s.accordionEmpty}>Sin carpetas.</p>
+          ) : (
+            <div>
+              <div className={s.entryHead}>
+                <span style={{ flex: 1 }}>Carpeta</span>
+                <span className={s.entryCell}>Fecha</span>
+                <span className={s.entryCell}>Días</span>
+                <span className={s.entryCell}>Dinero</span>
+                <span className={s.entryCell}>Inv.</span>
+                <span className={s.entryStatus}>Estado</span>
+              </div>
+              <EntryRows parentId={null} projectId={project.id} allEntries={allEntries} depth={0} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -65,16 +132,17 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
   const { projects, entries } = useProjectStore();
   const [filterPerson, setFilterPerson] = useState<string | null>(null);
 
-  const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
+  const filteredProjects = filterPerson
+    ? projects.filter(p => p.assignedTo === filterPerson)
+    : projects;
 
-  const filteredEntries = filterPerson
-    ? entries.filter(e => projectMap[e.projectId]?.assignedTo === filterPerson)
-    : entries;
-
+  // Stats from leaf entries of filtered projects
+  const filteredProjectIds = new Set(filteredProjects.map(p => p.id));
+  const filteredEntries = entries.filter(e => filteredProjectIds.has(e.projectId));
   const childIds = new Set(entries.map(e => e.parentId).filter(Boolean));
   const leafEntries = filteredEntries.filter(e => !childIds.has(e.id));
 
-  const overdueEntries = leafEntries.filter(e => getEntryStatus(e) === 'overdue');
+  const overdueCount  = leafEntries.filter(e => getEntryStatus(e) === 'overdue').length;
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
 
@@ -133,57 +201,42 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
       {/* ── Stats ── */}
       <div className={s.statsGrid}>
         <div className={s.statCard}>
-          <p className={s.statValue}>{filteredEntries.length}</p>
-          <p className={s.statLabel}>Carpetas / semanas</p>
+          <p className={s.statValue}>{filteredProjects.length}</p>
+          <p className={s.statLabel}>Proyectos</p>
         </div>
         <div className={s.statCard}>
           <p className={s.statValue}>{totalInvoices}</p>
           <p className={s.statLabel}>Total invoices</p>
         </div>
         <div className={s.statCard}>
-          <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>{fmt$(totalMoney)}</p>
+          <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>
+            {totalMoney > 0 ? `$${totalMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+          </p>
           <p className={s.statLabel}>Total dinero</p>
         </div>
-        {overdueEntries.length > 0 && (
+        {overdueCount > 0 && (
           <div className={`${s.statCard} ${s.statCardOverdue}`}>
-            <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueEntries.length}</p>
+            <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueCount}</p>
             <p className={s.statLabel}>Pasados de tiempo</p>
           </div>
         )}
       </div>
 
-      {/* ── Overdue section ── */}
-      {overdueEntries.length > 0 && (
-        <div>
-          <p className={`${s.sectionTitle} ${s.sectionTitleOverdue}`}>
-            Pasados de tiempo (+30 días sin pagar)
-          </p>
-          <EntriesTable
-            entries={overdueEntries}
-            allEntries={entries}
-            projectMap={projectMap}
-            onOpenProject={onOpenProject}
-            rowClass={s.tableRowOverdue}
-          />
-        </div>
-      )}
-
-      {/* ── All entries table ── */}
+      {/* ── Projects accordion ── */}
       <div>
-        <p className={s.sectionTitle}>Todos los registros</p>
-        {filteredEntries.length === 0 ? (
+        <p className={s.sectionTitle}>Proyectos</p>
+        {filteredProjects.length === 0 ? (
           <p className={s.emptyNote}>
             {projects.length === 0
               ? 'Crea un proyecto en "Proyectos" para empezar.'
-              : 'No hay entradas aún. Abre un proyecto y crea carpetas de semana.'}
+              : 'Ningún proyecto asignado a esta persona.'}
           </p>
         ) : (
-          <EntriesTable
-            entries={filteredEntries}
-            allEntries={entries}
-            projectMap={projectMap}
-            onOpenProject={onOpenProject}
-          />
+          <div className={s.accordionList}>
+            {filteredProjects.map(p => (
+              <ProjectAccordion key={p.id} project={p} allEntries={entries} onOpen={onOpenProject} />
+            ))}
+          </div>
         )}
       </div>
     </div>
