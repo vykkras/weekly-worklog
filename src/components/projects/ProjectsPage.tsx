@@ -9,6 +9,12 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
   const { projects, addProject, deleteProject } = useProjectStore();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState<NewProjectForm>({ name: '', description: '', assignedTo: '' });
+  const [filterPerson, setFilterPerson] = useState<string | null>(null);
+
+  const activePeople = PEOPLE.filter(p => projects.some(proj => proj.assignedTo === p));
+  const visibleProjects = filterPerson
+    ? projects.filter(p => p.assignedTo === filterPerson)
+    : projects;
 
   function handleCreate() {
     if (!form.name.trim()) return;
@@ -25,11 +31,35 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
         <button className={s.newBtn} onClick={() => setModal(true)}>+ Nuevo proyecto</button>
       </div>
 
-      {projects.length === 0 ? (
-        <p className={s.emptyNote}>No hay proyectos. Crea el primero con el botón "Nuevo proyecto".</p>
+      {activePeople.length > 0 && (
+        <div className={s.filterBar}>
+          <button
+            className={`${s.chip} ${filterPerson === null ? s.chipActive : ''}`}
+            onClick={() => setFilterPerson(null)}
+          >
+            Todos
+          </button>
+          {activePeople.map(person => (
+            <button
+              key={person}
+              className={`${s.chip} ${filterPerson === person ? s.chipActive : ''}`}
+              onClick={() => setFilterPerson(filterPerson === person ? null : person)}
+            >
+              {person}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {visibleProjects.length === 0 ? (
+        <p className={s.emptyNote}>
+          {projects.length === 0
+            ? 'No hay proyectos. Crea el primero con el botón "Nuevo proyecto".'
+            : 'Ningún proyecto asignado a esta persona.'}
+        </p>
       ) : (
         <div className={s.grid}>
-          {projects.map(p => (
+          {visibleProjects.map(p => (
             <div key={p.id} className={s.card} onClick={() => onOpen(p.id)}>
               <p className={s.cardName}>{p.name}</p>
               {p.description && <p className={s.cardDesc}>{p.description}</p>}

@@ -33,6 +33,26 @@
 }
 .newBtn:hover { background: #2a4f83; }
 
+.filterBar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.chip:hover { border-color: #93c5fd; color: #1d4ed8; }
+.chipActive { background: #1e3a5f !important; color: #fff !important; border-color: #1e3a5f !important; }
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
