@@ -2,7 +2,6 @@ import s from './DashboardPage.module.css';
 import { useProjectStore, type Project, type WeekEntry } from '../../store/projectStore';
 import { getEntryStatus, daysFromApproved } from '../../utils/entryStatus';
 import { useState } from 'react';
-import { PEOPLE } from '../../data/people';
 
 function fmt$(n: number | null) {
   if (n === null || n === 0) return '—';
@@ -131,7 +130,7 @@ function ProjectAccordion({
 }
 
 export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: string) => void }) {
-  const { projects, entries } = useProjectStore();
+  const { projects, entries, people } = useProjectStore();
   const [filterPerson, setFilterPerson] = useState<string | null>(null);
 
   const filteredProjects = filterPerson
@@ -152,7 +151,7 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
 
-  const personCounts = PEOPLE.map(person => ({
+  const personCounts = people.map(person => ({
     name: person,
     count: projects.filter(p => p.assignedTo === person).length,
   })).filter(pc => pc.count > 0);
@@ -175,7 +174,7 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
             >
               Todos
             </button>
-            {PEOPLE.filter(p => projects.some(proj => proj.assignedTo === p)).map(person => (
+            {people.filter(p => projects.some(proj => proj.assignedTo === p)).map(person => (
               <button
                 key={person}
                 className={`${s.chip} ${filterPerson === person ? s.chipActive : ''}`}

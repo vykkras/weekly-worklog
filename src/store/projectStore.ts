@@ -45,6 +45,11 @@ export interface Project {
 interface ProjectStore {
   projects: Project[];
   entries: WeekEntry[];
+  people: string[];
+
+  // People
+  addPerson: (name: string) => void;
+  removePerson: (name: string) => void;
 
   // Projects
   addProject: (name: string, description: string, assignedTo: string, net?: 14 | 30) => string;
@@ -73,6 +78,19 @@ export const useProjectStore = create<ProjectStore>()(
     (set) => ({
       projects: [],
       entries: [],
+      people: ['Victor', 'Daineris', 'Yeniffer', 'Jessica'],
+
+      addPerson(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        set(s => ({
+          people: s.people.includes(trimmed) ? s.people : [...s.people, trimmed],
+        }));
+      },
+
+      removePerson(name) {
+        set(s => ({ people: s.people.filter(p => p !== name) }));
+      },
 
       addProject(name, description, assignedTo, net = 30) {
         const id = crypto.randomUUID();

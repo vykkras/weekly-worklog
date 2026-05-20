@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import s from './ProjectsPage.module.css';
 import { useProjectStore } from '../../store/projectStore';
-import { PEOPLE } from '../../data/people';
 
 interface NewProjectForm { name: string; description: string; assignedTo: string; net: 14 | 30; }
 
 export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
-  const { projects, addProject, deleteProject } = useProjectStore();
+  const { projects, people, addProject, deleteProject, addPerson } = useProjectStore();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState<NewProjectForm>({ name: '', description: '', assignedTo: '', net: 30 });
   const [filterPerson, setFilterPerson] = useState<string | null>(null);
+  const [addingPerson, setAddingPerson] = useState(false);
+  const [newPersonName, setNewPersonName] = useState('');
+  const newPersonRef = useRef<HTMLInputElement>(null);
 
-  const activePeople = PEOPLE.filter(p => projects.some(proj => proj.assignedTo === p));
+  const activePeople = people.filter(p => projects.some(proj => proj.assignedTo === p));
   const visibleProjects = filterPerson
     ? projects.filter(p => p.assignedTo === filterPerson)
     : projects;
@@ -21,7 +23,35 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
     const id = addProject(form.name.trim(), form.description.trim(), form.assignedTo, form.net);
     setForm({ name: '', description: '', assignedTo: '', net: 30 });
     setModal(false);
+    setAddingPerson(false);
+    setNewPersonName('');
     onOpen(id);
+  }
+
+  function confirmNewPerson() {
+    const name = newPersonName.trim();
+    if (!name) { setAddingPerson(false); return; }
+    addPerson(name);
+    setForm(f => ({ ...f, assignedTo: name }));
+    setAddingPerson(false);
+    setNewPersonName('');
+  }
+
+  function handleAssignedChange(value: string) {
+    if (value === '__new__') {
+      setAddingPerson(true);
+      setNewPersonName('');
+      setTimeout(() => newPersonRef.current?.focus(), 50);
+    } else {
+      setForm(f => ({ ...f, assignedTo: value }));
+      setAddingPerson(false);
+    }
+  }
+
+  function closeModal() {
+    setModal(false);
+    setAddingPerson(false);
+    setNewPersonName('');
   }
 
   return (
@@ -82,9 +112,10 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
       )}
 
       {modal && (
-        <div className={s.modalOverlay} onClick={() => setModal(false)}>
+        <div className={s.modalOverlay} onClick={closeModal}>
           <div className={s.modal} onClick={e => e.stopPropagation()}>
             <p className={s.modalTitle}>Nuevo proyecto</p>
+
             <div className={s.field}>
               <label className={s.label}>Nombre</label>
               <input
@@ -96,6 +127,7 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
                 autoFocus
               />
             </div>
+
             <div className={s.field}>
               <label className={s.label}>Descripción (opcional)</label>
               <input
@@ -105,17 +137,41 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               />
             </div>
+
             <div className={s.field}>
               <label className={s.label}>Asignado a</label>
               <select
                 className={s.input}
-                value={form.assignedTo}
-                onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))}
+                value={addingPerson ? '__new__' : form.assignedTo}
+                onChange={e => handleAssignedChange(e.target.value)}
               >
                 <option value="">— Sin asignar —</option>
-                {PEOPLE.map(p => <option key={p} value={p}>{p}</option>)}
+                {people.map(p => <option key={p} value={p}>{p}</option>)}
+                <option value="__new__">+ Agregar nombre nuevo...</option>
               </select>
+              {addingPerson && (
+                <div className={s.newPersonRow}>
+                  <input
+                    ref={newPersonRef}
+                    className={s.input}
+                    placeholder="Nombre de la persona"
+                    value={newPersonName}
+                    onChange={e => setNewPersonName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') confirmNewPerson();
+                      if (e.key === 'Escape') { setAddingPerson(false); setNewPersonName(''); }
+                    }}
+                  />
+                  <button className={s.confirmPersonBtn} onClick={confirmNewPerson} disabled={!newPersonName.trim()}>
+                    Agregar
+                  </button>
+                </div>
+              )}
+              {form.assignedTo && !addingPerson && (
+                <p className={s.assignedHint}>Asignado a: <strong>{form.assignedTo}</strong></p>
+              )}
             </div>
+
             <div className={s.field}>
               <label className={s.label}>Período de pago</label>
               <div className={s.netToggle}>
@@ -123,8 +179,9 @@ export default function ProjectsPage({ onOpen }: { onOpen: (id: string) => void 
                 <button type="button" className={`${s.netBtn} ${form.net === 30 ? s.netBtnActive : ''}`} onClick={() => setForm(f => ({ ...f, net: 30 }))}>Net 30</button>
               </div>
             </div>
+
             <div className={s.modalActions}>
-              <button className={s.cancelBtn} onClick={() => setModal(false)}>Cancelar</button>
+              <button className={s.cancelBtn} onClick={closeModal}>Cancelar</button>
               <button className={s.saveBtn} onClick={handleCreate}>Crear</button>
             </div>
           </div>
