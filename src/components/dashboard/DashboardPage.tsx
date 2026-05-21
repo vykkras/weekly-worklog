@@ -3,6 +3,62 @@ import { useProjectStore, type Project, type WeekEntry } from '../../store/proje
 import { getEntryStatus, daysFromApproved } from '../../utils/entryStatus';
 import { useState } from 'react';
 
+const CHART_COLORS = [
+  '#1e3a5f','#3b82f6','#10b981','#f59e0b','#ef4444',
+  '#8b5cf6','#06b6d4','#f97316','#ec4899','#14b8a6',
+];
+
+function DonutChart({ slices }: { slices: { label: string; value: number }[] }) {
+  const total = slices.reduce((sum, d) => sum + d.value, 0);
+  if (total === 0) return null;
+
+  const cx = 80, cy = 80, R = 68, ri = 38;
+  let angle = -Math.PI / 2;
+
+  const arcs = slices.map((slice, i) => {
+    const start = angle;
+    const sweep = (slice.value / total) * 2 * Math.PI;
+    angle += sweep;
+    const end = angle;
+    const [x1, y1] = [cx + R * Math.cos(start), cy + R * Math.sin(start)];
+    const [x2, y2] = [cx + R * Math.cos(end),   cy + R * Math.sin(end)];
+    const [ix1, iy1] = [cx + ri * Math.cos(end), cy + ri * Math.sin(end)];
+    const [ix2, iy2] = [cx + ri * Math.cos(start), cy + ri * Math.sin(start)];
+    const large = sweep > Math.PI ? 1 : 0;
+    const d = `M${x1} ${y1} A${R} ${R} 0 ${large} 1 ${x2} ${y2} L${ix1} ${iy1} A${ri} ${ri} 0 ${large} 0 ${ix2} ${iy2}Z`;
+    return { ...slice, d, color: CHART_COLORS[i % CHART_COLORS.length] };
+  });
+
+  const centerLabel = total >= 10000
+    ? `$${(total / 1000).toFixed(1)}k`
+    : `$${total.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+
+  return (
+    <div className={s.chartInner}>
+      <svg viewBox="0 0 160 160" className={s.chartSvg}>
+        {arcs.map((arc, i) => (
+          <path key={i} d={arc.d} fill={arc.color} stroke="#fff" strokeWidth={2} />
+        ))}
+        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="8" fill="#94a3b8">Total</text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+          {centerLabel}
+        </text>
+      </svg>
+      <div className={s.chartLegend}>
+        {arcs.map((arc, i) => (
+          <div key={i} className={s.legendItem}>
+            <span className={s.legendDot} style={{ background: arc.color }} />
+            <span className={s.legendLabel}>{arc.label}</span>
+            <span className={s.legendValue}>
+              ${arc.value.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function fmt$(n: number | null) {
   if (n === null || n === 0) return '—';
   return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -151,6 +207,14 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
   const totalMoney    = leafEntries.reduce((s, e) => s + (e.money ?? 0), 0);
   const totalInvoices = leafEntries.reduce((s, e) => s + (e.invoiceCount ?? 0), 0);
 
+  const projectMoneySlices = filteredProjects
+    .map(p => ({
+      label: p.name,
+      value: leafEntries.filter(e => e.projectId === p.id).reduce((sum, e) => sum + (e.money ?? 0), 0),
+    }))
+    .filter(sl => sl.value > 0)
+    .sort((a, b) => b.value - a.value);
+
   const personCounts = people.map(person => ({
     name: person,
     count: projects.filter(p => p.assignedTo === person).length,
@@ -217,26 +281,35 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
         </div>
       )}
 
-      {/* ── Stats ── */}
-      <div className={s.statsGrid}>
-        <div className={s.statCard}>
-          <p className={s.statValue}>{filteredProjects.length}</p>
-          <p className={s.statLabel}>Proyectos</p>
+      {/* ── Stats + chart ── */}
+      <div className={s.statsAndChart}>
+        <div className={s.statsGrid}>
+          <div className={s.statCard}>
+            <p className={s.statValue}>{filteredProjects.length}</p>
+            <p className={s.statLabel}>Proyectos</p>
+          </div>
+          <div className={s.statCard}>
+            <p className={s.statValue}>{totalInvoices}</p>
+            <p className={s.statLabel}>Total invoices</p>
+          </div>
+          <div className={s.statCard}>
+            <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>
+              {totalMoney > 0 ? `$${totalMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+            </p>
+            <p className={s.statLabel}>Total dinero</p>
+          </div>
+          {overdueCount > 0 && (
+            <div className={`${s.statCard} ${s.statCardOverdue}`}>
+              <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueCount}</p>
+              <p className={s.statLabel}>Pasados de tiempo</p>
+            </div>
+          )}
         </div>
-        <div className={s.statCard}>
-          <p className={s.statValue}>{totalInvoices}</p>
-          <p className={s.statLabel}>Total invoices</p>
-        </div>
-        <div className={s.statCard}>
-          <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>
-            {totalMoney > 0 ? `$${totalMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-          </p>
-          <p className={s.statLabel}>Total dinero</p>
-        </div>
-        {overdueCount > 0 && (
-          <div className={`${s.statCard} ${s.statCardOverdue}`}>
-            <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueCount}</p>
-            <p className={s.statLabel}>Pasados de tiempo</p>
+
+        {projectMoneySlices.length > 0 && (
+          <div className={s.chartCard}>
+            <p className={s.chartTitle}>Dinero por proyecto</p>
+            <DonutChart slices={projectMoneySlices} />
           </div>
         )}
       </div>
