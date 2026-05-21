@@ -45,6 +45,21 @@
   flex-wrap: wrap;
 }
 
+.filterSelect {
+  display: none;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  outline: none;
+  width: 100%;
+  max-width: 260px;
+  cursor: pointer;
+}
+.filterSelect:focus { border-color: #93c5fd; }
+
 .chip {
   padding: 5px 14px;
   border-radius: 20px;
@@ -305,8 +320,8 @@
 
   .heroTitle { font-size: 20px; }
 
-  .filterChips { gap: 4px; }
-  .chip { padding: 5px 10px; font-size: 11px; }
+  .filterChips { display: none; }
+  .filterSelect { display: block; }
 
   .statsGrid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .statCard  { padding: 14px; }

@@ -167,6 +167,8 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
       {personCounts.length > 0 && (
         <div className={s.filterBar}>
           <span className={s.filterLabel}>Responsable</span>
+
+          {/* Desktop: chips */}
           <div className={s.filterChips}>
             <button
               className={`${s.chip} ${filterPerson === null ? s.chipActive : ''}`}
@@ -184,6 +186,18 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
               </button>
             ))}
           </div>
+
+          {/* Mobile: dropdown */}
+          <select
+            className={s.filterSelect}
+            value={filterPerson ?? ''}
+            onChange={e => setFilterPerson(e.target.value || null)}
+          >
+            <option value="">Todos</option>
+            {people.filter(p => projects.some(proj => proj.assignedTo === p)).map(person => (
+              <option key={person} value={person}>{person}</option>
+            ))}
+          </select>
         </div>
       )}
 
