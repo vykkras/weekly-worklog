@@ -315,7 +315,7 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
       </div>
 
       {/* ── Projects accordion ── */}
-      <div>
+      <div className={s.projectsSection}>
         <p className={s.sectionTitle}>Proyectos</p>
         {filteredProjects.length === 0 ? (
           <p className={s.emptyNote}>
