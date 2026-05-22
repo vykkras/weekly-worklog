@@ -12,7 +12,7 @@ function DonutChart({ slices }: { slices: { label: string; value: number }[] }) 
   const total = slices.reduce((sum, d) => sum + d.value, 0);
   if (total === 0) return null;
 
-  const cx = 80, cy = 80, R = 68, ri = 38;
+  const cx = 90, cy = 90, R = 78, ri = 44;
   let angle = -Math.PI / 2;
 
   const arcs = slices.map((slice, i) => {
@@ -35,12 +35,12 @@ function DonutChart({ slices }: { slices: { label: string; value: number }[] }) 
 
   return (
     <div className={s.chartInner}>
-      <svg viewBox="0 0 160 160" className={s.chartSvg}>
+      <svg viewBox="0 0 180 180" className={s.chartSvg}>
         {arcs.map((arc, i) => (
           <path key={i} d={arc.d} fill={arc.color} stroke="#fff" strokeWidth={2} />
         ))}
-        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="8" fill="#94a3b8">Total</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#1e293b">
+        <text x={cx} y={cy - 7} textAnchor="middle" fontSize="9" fill="#94a3b8">Total</text>
+        <text x={cx} y={cy + 11} textAnchor="middle" fontSize="13" fontWeight="bold" fill="#1e293b">
           {centerLabel}
         </text>
       </svg>
