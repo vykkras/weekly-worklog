@@ -139,9 +139,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 12px;
-  transform: translateX(-200px) translateY(-12px);
+  transform: translateX(-200px) translateY(-60px);
 }
 
 .chartTitle {
