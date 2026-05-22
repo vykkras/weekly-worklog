@@ -107,36 +107,40 @@
   margin-top: 2px;
 }
 
-/* ── Stats + chart row ── */
+/* ── Top row: left column + floating chart ── */
 
-.statsAndChart {
+.topRow {
   display: flex;
+  gap: 40px;
+  align-items: stretch;
+}
+
+.topLeft {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: flex-start;
 }
 
 /* ── Stat cards ── */
 
 .statsGrid {
-  flex: 1;
-  min-width: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
 }
 
-/* ── Donut chart card ── */
+/* ── Floating chart (no card box) ── */
 
-.chartCard {
-  background: #fff;
-  border-radius: 12px;
-  padding: 18px 20px 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.chartFloat {
+  width: 260px;
   flex-shrink: 0;
-  width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
 .chartTitle {
@@ -145,6 +149,7 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: #94a3b8;
+  align-self: flex-start;
 }
 
 .chartInner {
@@ -152,11 +157,12 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  width: 100%;
 }
 
 .chartSvg {
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
 }
 
 .chartLegend {
@@ -403,11 +409,11 @@
   .filterChips { display: none; }
   .filterSelect { display: block; }
 
-  .statsAndChart { flex-direction: column; }
+  .topRow { flex-direction: column; gap: 24px; }
+  .chartFloat { width: 100%; }
   .statsGrid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .statCard  { padding: 14px; }
   .statValue { font-size: 22px; }
-  .chartCard { width: 100%; box-sizing: border-box; }
   .chartSvg  { width: 160px; height: 160px; }
 
   .entryHead, .entryRow { gap: 4px; }

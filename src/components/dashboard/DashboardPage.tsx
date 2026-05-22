@@ -265,49 +265,49 @@ export default function DashboardPage({ onOpenProject }: { onOpenProject: (id: s
         </div>
       )}
 
-      {/* ── Per-person project counts ── */}
-      {personCounts.length > 0 && (
-        <div className={s.personGrid}>
-          {personCounts.map(pc => (
-            <button
-              key={pc.name}
-              className={`${s.personCard} ${filterPerson === pc.name ? s.personCardActive : ''}`}
-              onClick={() => setFilterPerson(filterPerson === pc.name ? null : pc.name)}
-            >
-              <p className={s.personName}>{pc.name}</p>
-              <p className={s.personCount}>{pc.count} proyecto{pc.count !== 1 ? 's' : ''}</p>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Stats + chart ── */}
-      <div className={s.statsAndChart}>
-        <div className={s.statsGrid}>
-          <div className={s.statCard}>
-            <p className={s.statValue}>{filteredProjects.length}</p>
-            <p className={s.statLabel}>Proyectos</p>
-          </div>
-          <div className={s.statCard}>
-            <p className={s.statValue}>{totalInvoices}</p>
-            <p className={s.statLabel}>Total invoices</p>
-          </div>
-          <div className={s.statCard}>
-            <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>
-              {totalMoney > 0 ? `$${totalMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-            </p>
-            <p className={s.statLabel}>Total dinero</p>
-          </div>
-          {overdueCount > 0 && (
-            <div className={`${s.statCard} ${s.statCardOverdue}`}>
-              <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueCount}</p>
-              <p className={s.statLabel}>Pasados de tiempo</p>
+      {/* ── Top row: left (person cards + stats) | right (chart) ── */}
+      <div className={s.topRow}>
+        <div className={s.topLeft}>
+          {personCounts.length > 0 && (
+            <div className={s.personGrid}>
+              {personCounts.map(pc => (
+                <button
+                  key={pc.name}
+                  className={`${s.personCard} ${filterPerson === pc.name ? s.personCardActive : ''}`}
+                  onClick={() => setFilterPerson(filterPerson === pc.name ? null : pc.name)}
+                >
+                  <p className={s.personName}>{pc.name}</p>
+                  <p className={s.personCount}>{pc.count} proyecto{pc.count !== 1 ? 's' : ''}</p>
+                </button>
+              ))}
             </div>
           )}
+          <div className={s.statsGrid}>
+            <div className={s.statCard}>
+              <p className={s.statValue}>{filteredProjects.length}</p>
+              <p className={s.statLabel}>Proyectos</p>
+            </div>
+            <div className={s.statCard}>
+              <p className={s.statValue}>{totalInvoices}</p>
+              <p className={s.statLabel}>Total invoices</p>
+            </div>
+            <div className={s.statCard}>
+              <p className={s.statValue} style={{ fontSize: totalMoney > 9999 ? '20px' : undefined }}>
+                {totalMoney > 0 ? `$${totalMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+              </p>
+              <p className={s.statLabel}>Total dinero</p>
+            </div>
+            {overdueCount > 0 && (
+              <div className={`${s.statCard} ${s.statCardOverdue}`}>
+                <p className={`${s.statValue} ${s.statValueOverdue}`}>{overdueCount}</p>
+                <p className={s.statLabel}>Pasados de tiempo</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {projectMoneySlices.length > 0 && (
-          <div className={s.chartCard}>
+          <div className={s.chartFloat}>
             <p className={s.chartTitle}>Dinero por proyecto</p>
             <DonutChart slices={projectMoneySlices} />
           </div>
