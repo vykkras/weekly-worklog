@@ -134,7 +134,7 @@
 /* ── Floating chart (no card box) ── */
 
 .chartFloat {
-  width: 260px;
+  width: 360px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -154,19 +154,21 @@
 
 .chartInner {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 16px;
   width: 100%;
 }
 
 .chartSvg {
-  width: 200px;
-  height: 200px;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
 }
 
 .chartLegend {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
